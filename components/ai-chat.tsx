@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 import React, { useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   ArrowUp,
   RotateCcw,
@@ -13,115 +15,73 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 function FormattedContent({ content }: { content: string }) {
-  const parts: React.ReactNode[] = [];
-  const lines = content.split('\n');
-  let i = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-
-    // Check for image markdown: ![alt](url)
-    if (line.match(/!\[.*?\]\(.*?\)/)) {
-      const imageMatch = line.match(/!\[(.*?)\]\((.*?)\)/);
-      if (imageMatch) {
-        parts.push(
-          <div key={`image-${parts.length}`} className="relative my-2 w-2/3">
-            <Image
-              src={imageMatch[2]}
-              alt={imageMatch[1]}
-              width={300}
-              height={200}
-              className="w-full rounded-lg object-contain"
-              unoptimized
-            />
-          </div>
-        );
-      }
-      i++;
-    }
-    // Check for markdown table
-    else if (line.includes('|') && i + 1 < lines.length && lines[i + 1].includes('|')) {
-      const tableLines: string[] = [];
-      while (i < lines.length && lines[i].includes('|')) {
-        const currentLine = lines[i];
-        // Skip separator rows (rows with only dashes, pipes, and spaces)
-        if (!currentLine.match(/^\|\s*-+(\s*\|\s*-+)*\s*\|?\s*$/)) {
-          tableLines.push(currentLine);
-        }
-        i++;
-      }
-
-      if (tableLines.length > 0) {
-        parts.push(
-          <div key={`table-${parts.length}`} className="my-2 w-full overflow-x-auto">
-            <table className="w-full border-collapse text-xs whitespace-nowrap">
-              <tbody>
-                {tableLines.map((tableLine, idx) => {
-                  const cells = tableLine.split('|').filter((cell) => cell.trim());
-                  const isHeader = idx === 0;
-                  return (
-                    <tr key={`row-${idx}`}>
-                      {cells.map((cell, cellIdx) => (
-                        <td
-                          key={`cell-${cellIdx}`}
-                          className={`border border-slate-300 px-2 py-1 ${
-                            isHeader ? 'bg-slate-200 font-semibold' : ''
-                          }`}
-                        >
-                          {cell.trim()}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        );
-      }
-    }
-    // Check for bullet points
-    else if (line.trim().startsWith('•')) {
-      parts.push(
-        <div key={`bullet-${parts.length}`} className="ml-4 flex items-start gap-2">
-          <span className="mt-0.5 text-slate-600">•</span>
-          <span>{line.replace(/^•\s*/, '').trim()}</span>
-        </div>
-      );
-      i++;
-    }
-    // Check for numbered list
-    else if (/^\d+\.\s/.test(line.trim())) {
-      parts.push(
-        <div key={`list-${parts.length}`} className="ml-4">
-          {line.trim()}
-        </div>
-      );
-      i++;
-    }
-    // Check for bold section headers
-    else if (line.trim().endsWith(':') && line.trim().length > 0) {
-      parts.push(
-        <div key={`header-${parts.length}`} className="mt-3 font-semibold text-slate-900">
-          {line.trim()}
-        </div>
-      );
-      i++;
-    }
-    // Regular text with preserved spacing
-    else if (line.trim()) {
-      parts.push(
-        <div key={`text-${parts.length}`} className="whitespace-normal">
-          {line.trim()}
-        </div>
-      );
-      i++;
-    } else {
-      i++;
-    }
-  }
-
-  return <div className="flex flex-col gap-1">{parts}</div>;
+  return (
+    <div className="prose prose-sm max-w-none text-gray-900">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h1: ({ ...props }) => <h1 className="text-xl font-bold mb-2" {...props} />,
+          h2: ({ ...props }) => <h2 className="text-lg font-bold mb-2 mt-3" {...props} />,
+          h3: ({ ...props }) => <h3 className="text-base font-bold mb-2 mt-2" {...props} />,
+          h4: ({ ...props }) => <h4 className="font-bold mb-2" {...props} />,
+          p: ({ ...props }) => <p className="mb-2" {...props} />,
+          strong: ({ ...props }) => <strong className="font-semibold" {...props} />,
+          em: ({ ...props }) => <em className="italic" {...props} />,
+          ul: ({ ...props }) => <ul className="ml-4 mb-2 list-disc" {...props} />,
+          ol: ({ ...props }) => <ol className="ml-4 mb-2 list-decimal" {...props} />,
+          li: ({ ...props }) => <li className="mb-1" {...props} />,
+          code: ({ node, inline, children, ...props }: any) =>
+            inline ? (
+              <code className="bg-slate-200 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+                {children}
+              </code>
+            ) : (
+              <code className="block bg-slate-100 p-2 rounded mb-2 overflow-x-auto font-mono text-sm" {...props}>
+                {children}
+              </code>
+            ),
+          blockquote: ({ ...props }) => (
+            <blockquote className="border-l-4 border-slate-300 pl-4 py-2 my-2 italic text-slate-700" {...props} />
+          ),
+          table: ({ ...props }) => (
+            <div className="my-4 w-full overflow-x-auto rounded-lg border border-slate-300">
+              <table className="w-full border-collapse text-sm" {...props} />
+            </div>
+          ),
+          thead: ({ ...props }) => <thead className="bg-slate-100" {...props} />,
+          th: ({ ...props }) => <th className="border-b-2 border-slate-300 px-4 py-3 font-semibold text-left text-slate-900" {...props} />,
+          td: ({ ...props }) => <td className="border-b border-slate-200 px-4 py-2 text-slate-700" {...props} />,
+          img: ({ node, src, alt, ...props }: any) =>
+            src ? (
+              <div className="relative my-2 w-full">
+                <Image
+                  src={src}
+                  alt={alt || 'image'}
+                  width={300}
+                  height={200}
+                  className="w-full max-w-md rounded-lg object-contain"
+                  unoptimized
+                />
+              </div>
+            ) : null,
+          a: ({ node, href, children, ...props }: any) => (
+            <a
+              href={href}
+              className="text-blue-600 hover:text-blue-800 underline"
+              target="_blank"
+              rel="noopener noreferrer"
+              {...props}
+            >
+              {children}
+            </a>
+          ),
+          hr: () => <hr className="my-2 border-slate-300" />,
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
 }
 
 interface Message {
@@ -234,7 +194,7 @@ export function AIChat() {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -357,7 +317,7 @@ export function AIChat() {
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder="Ask anything?"
             className="border border-slate-200 text-sm sm:text-base"
             disabled={isLoading}
