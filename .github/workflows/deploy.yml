@@ -9,16 +9,11 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Pull latest code
-        run: |
-          cd ${{ github.workspace }}
-          git fetch origin main
-          git reset --hard origin/main
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Rebuild and restart
-        run: |
-          cd ${{ github.workspace }}
-          docker compose up -d --build
+        run: docker compose up -d --build
 
       - name: Prune old images
         run: docker image prune -f
