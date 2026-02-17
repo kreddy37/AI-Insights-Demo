@@ -9,6 +9,8 @@ RUN npm ci
 # Build the application
 FROM base AS builder
 WORKDIR /app
+ARG NEXT_PUBLIC_N8N_BASE_URL
+ARG NEXT_PUBLIC_N8N_WEBHOOK_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

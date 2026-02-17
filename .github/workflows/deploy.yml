@@ -12,14 +12,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create .env file
-        run: |
-          cat <<EOF > .env
-          NEXT_PUBLIC_N8N_BASE_URL=${{ secrets.NEXT_PUBLIC_N8N_BASE_URL }}
-          NEXT_PUBLIC_N8N_WEBHOOK_URL=${{ secrets.NEXT_PUBLIC_N8N_WEBHOOK_URL }}
-          EOF
-
       - name: Rebuild and restart
+        env:
+          NEXT_PUBLIC_N8N_BASE_URL: ${{ secrets.NEXT_PUBLIC_N8N_BASE_URL }}
+          NEXT_PUBLIC_N8N_WEBHOOK_URL: ${{ secrets.NEXT_PUBLIC_N8N_WEBHOOK_URL }}
         run: docker compose up -d --build
 
       - name: Prune old images
