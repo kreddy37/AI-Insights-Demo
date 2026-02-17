@@ -12,6 +12,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Verify secrets are set
+        env:
+          NEXT_PUBLIC_N8N_BASE_URL: ${{ secrets.NEXT_PUBLIC_N8N_BASE_URL }}
+          NEXT_PUBLIC_N8N_WEBHOOK_URL: ${{ secrets.NEXT_PUBLIC_N8N_WEBHOOK_URL }}
+        run: |
+          if [ -z "$NEXT_PUBLIC_N8N_BASE_URL" ] || [ -z "$NEXT_PUBLIC_N8N_WEBHOOK_URL" ]; then
+            echo "ERROR: One or more secrets are empty!"
+            echo "NEXT_PUBLIC_N8N_BASE_URL is set: $([ -n "$NEXT_PUBLIC_N8N_BASE_URL" ] && echo yes || echo NO)"
+            echo "NEXT_PUBLIC_N8N_WEBHOOK_URL is set: $([ -n "$NEXT_PUBLIC_N8N_WEBHOOK_URL" ] && echo yes || echo NO)"
+            exit 1
+          fi
+          echo "All secrets verified."
+
       - name: Rebuild and restart
         env:
           NEXT_PUBLIC_N8N_BASE_URL: ${{ secrets.NEXT_PUBLIC_N8N_BASE_URL }}
