@@ -1,0 +1,24 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Pull latest code
+        run: |
+          cd ${{ github.workspace }}
+          git fetch origin main
+          git reset --hard origin/main
+
+      - name: Rebuild and restart
+        run: |
+          cd ${{ github.workspace }}
+          docker compose up -d --build
+
+      - name: Prune old images
+        run: docker image prune -f
